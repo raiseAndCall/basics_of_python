@@ -1,0 +1,50 @@
+name: Verify Submissions
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      has_submissions: ${{ steps.set-matrix.outputs.has_submissions }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed submission directories
+        id: set-matrix
+        run: |
+          SUBMISSIONS=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} \
+            | grep -oP '^submission[^/]+' \
+            | sort -u \
+            | jq -R -s -c 'split("\n") | map(select(length > 0))')
+
+          echo "Changed submissions: $SUBMISSIONS"
+
+          if [ "$SUBMISSIONS" = "[]" ] || [ -z "$SUBMISSIONS" ]; then
+            echo "has_submissions=false" >> "$GITHUB_OUTPUT"
+            echo "matrix={\"submission\":[]}" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_submissions=true" >> "$GITHUB_OUTPUT"
+            echo "matrix={\"submission\":$SUBMISSIONS}" >> "$GITHUB_OUTPUT"
+          fi
+
+  verify:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_submissions == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build verification image
+        run: docker build -t ${{ matrix.submission }} ${{ matrix.submission }}/
+
+      - name: Run verification
+        run: docker run --rm ${{ matrix.submission }}
