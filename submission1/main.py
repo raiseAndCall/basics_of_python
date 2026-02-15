@@ -18,7 +18,7 @@ def main():
             print("Ділення на нуль неможливе")
         else:
             result = num1 / num2
-            # Use :g to format the number cleanly (e.g., 5.0 becomes 5)
+            # Use :g to format the number cleanly (e.g., 5.0 becomes 5) !
             print(f"{result:g}")
 
     except ValueError:
