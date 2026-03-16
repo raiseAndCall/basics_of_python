@@ -12,7 +12,6 @@ def main():
             return
 
         num1 = float(line1)
-        
         num2 = float(line2)
         
 
