@@ -13,7 +13,6 @@ def main():
         num1 = float(line1)
         num2 = float(line2)
         
-
         # Logical check for division by zero as per variant requirements
         if num2 == 0:
             print("Ділення на нуль неможливе")
